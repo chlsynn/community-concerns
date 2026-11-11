@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="tl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ulat Barangay</title>
+  <meta name="description" content="Mag-report ng problema sa inyong lugar tulad ng lubak, sirang ilaw, baha o basura, at alamin kung naayos na." />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --ground: #f5f7f9;
+      --surface: #ffffff;
+      --ink: #16222e;
+      --muted: #5a6876;
+      --line: #d8dfe6;
+      --accent: #1f4e79;
+      --accent-dark: #17405f;
+      --accent-soft: #e3edf6;
+      --amber: #b26a00;
+      --green: #1e7a4c;
+      --danger: #a32222;
+      --radius: 6px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--ground);
+      color: var(--ink);
+      font: 16px/1.55 "Segoe UI", system-ui, -apple-system, sans-serif;
+    }
+
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    /* Top bar */
+    .topbar { background: var(--surface); border-bottom: 1px solid var(--line); }
+    .topbar-inner {
+      max-width: 1080px; margin: 0 auto; padding: 14px 20px;
+      display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    }
+    .top-actions { display: flex; gap: 18px; align-items: center; }
+    .brand { font: 700 1.2rem Georgia, "Times New Roman", serif; color: var(--accent); }
+
+    /* Hero */
+    .hero { max-width: 1080px; margin: 0 auto; padding: 48px 20px 28px; }
+    .hero h1 {
+      font: 700 clamp(2rem, 5vw, 3rem)/1.1 Georgia, "Times New Roman", serif;
+      margin: 0 0 14px; max-width: 20ch;
+    }
+    .hero p { margin: 0 0 22px; max-width: 52ch; color: var(--muted); font-size: 1.05rem; }
+    .hero-actions { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+    #summary { margin: 22px 0 0; color: var(--ink); font-size: 1rem; }
+
+    /* Buttons */
+    .btn {
+      font: inherit; font-weight: 600; padding: 10px 18px; cursor: pointer;
+      border-radius: var(--radius); border: 1px solid var(--accent);
+      background: var(--accent); color: #fff;
+    }
+    .btn:hover { background: var(--accent-dark); }
+    .btn:disabled { opacity: 0.6; cursor: default; }
+    .btn-ghost { background: transparent; color: var(--accent); }
+    .btn-ghost:hover { background: var(--accent-soft); }
+    .btn-danger { background: #fff; color: var(--danger); border-color: var(--danger); }
+    .btn-danger:hover { background: #fbeaea; }
+    .btn-small { padding: 6px 12px; font-size: 0.9rem; }
+    .link-btn {
+      background: none; border: none; padding: 6px 0; cursor: pointer;
+      font: inherit; font-weight: 600; color: var(--accent);
+    }
+    .link-btn:hover { text-decoration: underline; }
+    .hero-link { color: var(--accent); font-weight: 600; text-decoration: none; }
+    .hero-link:hover { text-decoration: underline; }
+
+    /* Layout */
+    .layout {
+      max-width: 1080px; margin: 0 auto; padding: 12px 20px 64px;
+      display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
+      gap: 40px; align-items: start;
+    }
+    @media (max-width: 860px) { .layout { grid-template-columns: 1fr; gap: 32px; } }
+
+    h2 { font: 700 1.3rem Georgia, "Times New Roman", serif; margin: 0 0 14px; }
+
+    /* Form */
+    .panel {
+      background: var(--surface); border: 1px solid var(--line);
+      border-radius: var(--radius); padding: 22px;
+    }
+    .field { margin-bottom: 16px; }
+    label { display: block; font-weight: 600; font-size: 0.92rem; margin-bottom: 5px; }
+    .hint { font-weight: 400; color: var(--muted); }
+    input, select, textarea {
+      width: 100%; font: inherit; color: inherit; background: #fff;
+      padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius);
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+    textarea { min-height: 110px; resize: vertical; }
+    .form-note { margin: 14px 0 0; font-size: 0.88rem; color: var(--muted); }
+
+    /* Board */
+    .board-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+    #count-label { color: var(--muted); font-size: 0.92rem; }
+    .segments { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 14px; }
+    .segments button {
+      font: inherit; font-size: 0.92rem; padding: 6px 14px; cursor: pointer;
+      background: var(--surface); color: var(--ink);
+      border: 1px solid var(--line); border-radius: var(--radius);
+    }
+    .segments button:hover { border-color: var(--accent); }
+    .segments button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .filters { display: grid; grid-template-columns: 1fr 200px; gap: 10px; margin-bottom: 16px; }
+    @media (max-width: 560px) { .filters { grid-template-columns: 1fr; } }
+
+    .reports {
+      background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+    }
+    .report { padding: 18px 20px; border-top: 1px solid var(--line); }
+    .report:first-child { border-top: none; }
+    .report-head { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+    .report h3 { margin: 0; font-size: 1.05rem; }
+    .when { color: var(--muted); font-size: 0.88rem; white-space: nowrap; }
+    .where { margin: 2px 0 0; font-weight: 600; font-size: 0.95rem; }
+    .by { margin: 0 0 8px; color: var(--muted); font-size: 0.88rem; }
+    .desc { margin: 0 0 12px; max-width: 70ch; overflow-wrap: anywhere; }
+
+    /* Progress track: reported, in progress, resolved */
+    .track { display: flex; align-items: center; gap: 4px; }
+    .step { width: 34px; height: 5px; border-radius: 3px; background: var(--line); }
+    .track-label { margin-left: 8px; font-size: 0.88rem; font-weight: 600; }
+    .track.pending .step.on { background: var(--amber); }
+    .track.pending .track-label { color: var(--amber); }
+    .track.progress .step.on { background: var(--accent); }
+    .track.progress .track-label { color: var(--accent); }
+    .track.resolved .step.on { background: var(--green); }
+    .track.resolved .track-label { color: var(--green); }
+
+    .remarks {
+      margin: 12px 0 0; padding: 8px 12px; font-size: 0.95rem;
+      background: var(--ground); border-left: 3px solid var(--accent);
+    }
+    .remarks strong { display: block; font-size: 0.85rem; color: var(--muted); font-weight: 600; }
+
+    .admin-tools {
+      margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--line);
+      display: flex; flex-wrap: wrap; gap: 8px;
+    }
+    .admin-tools select { width: auto; }
+    .admin-tools input { flex: 1; min-width: 180px; width: auto; }
+
+    .empty { padding: 28px 20px; margin: 0; color: var(--muted); }
+
+    /* Login dialog */
+    dialog {
+      border: 1px solid var(--line); border-radius: 8px; padding: 24px;
+      width: min(360px, 92vw); color: var(--ink);
+    }
+    dialog::backdrop { background: rgba(22, 34, 46, 0.45); }
+    dialog h2 { margin-bottom: 16px; }
+    .dialog-actions { display: flex; gap: 10px; margin-top: 18px; }
+    .error-text { color: var(--danger); font-size: 0.92rem; margin: 0 0 8px; }
+
+    /* Toast */
+    .toast {
+      position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
+      background: var(--ink); color: #fff; padding: 10px 18px; border-radius: var(--radius);
+      max-width: 92vw; z-index: 20;
+    }
+    .toast.error { background: var(--danger); }
+    .toast[hidden] { display: none; }
+
+    /* Footer */
+    .footer { border-top: 1px solid var(--line); background: var(--surface); }
+    .footer-inner {
+      max-width: 1080px; margin: 0 auto; padding: 18px 20px;
+      display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+      color: var(--muted); font-size: 0.9rem;
+    }
+    .footer a { color: var(--accent); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <span class="brand" data-i18n="brand"></span>
+      <div class="top-actions">
+        <button class="link-btn" id="lang-btn" type="button"></button>
+        <button class="link-btn" id="login-btn" type="button" data-i18n="adminLogin"></button>
+        <button class="link-btn" id="logout-btn" type="button" data-i18n="logout" hidden></button>
+      </div>
+    </div>
+  </header>
+
+  <section class="hero">
+    <h1 data-i18n="heroTitle"></h1>
+    <p data-i18n="heroText"></p>
+    <div class="hero-actions">
+      <a class="btn" href="#report" style="text-decoration:none;" data-i18n="reportBtn"></a>
+      <a class="hero-link" href="#reports" data-i18n="seeAll"></a>
+    </div>
+    <p id="summary" data-i18n="loading"></p>
+  </section>
+
+  <main class="layout">
+    <section id="report" aria-labelledby="form-title">
+      <div class="panel">
+        <h2 id="form-title" data-i18n="formTitle"></h2>
+        <form id="report-form">
+          <div class="field">
+            <label for="category" data-i18n="category"></label>
+            <select id="category" required></select>
+          </div>
+          <div class="field">
+            <label for="location" data-i18n="location"></label>
+            <input id="location" type="text" data-i18n-ph="locationPh" required />
+          </div>
+          <div class="field">
+            <label for="description" data-i18n="description"></label>
+            <textarea id="description" required></textarea>
+          </div>
+          <div class="field">
+            <label for="reporter_name"><span data-i18n="name"></span> <span class="hint" data-i18n="optional"></span></label>
+            <input id="reporter_name" type="text" />
+          </div>
+          <button class="btn" id="submit-btn" type="submit" data-i18n="submit"></button>
+        </form>
+        <p class="form-note" data-i18n="formNote"></p>
+      </div>
+    </section>
+
+    <section id="reports" aria-labelledby="board-title">
+      <div class="board-head">
+        <h2 id="board-title" data-i18n="boardTitle"></h2>
+        <span id="count-label"></span>
+      </div>
+      <div class="segments" id="segments" role="group" data-i18n-aria="statusGroup"></div>
+      <div class="filters">
+        <input id="search" type="search" data-i18n-ph="searchPh" data-i18n-aria="searchPh" />
+        <select id="filter-category" data-i18n-aria="allCats"></select>
+      </div>
+      <div class="reports" id="list"><p class="empty" data-i18n="loading"></p></div>
+    </section>
+  </main>
+
+  <dialog id="login-dialog">
+    <h2 data-i18n="loginTitle"></h2>
+    <form id="login-form">
+      <div class="field">
+        <label for="login-email" data-i18n="email"></label>
+        <input id="login-email" type="email" autocomplete="username" required />
+      </div>
+      <div class="field">
+        <label for="login-password" data-i18n="password"></label>
+        <input id="login-password" type="password" autocomplete="current-password" required />
+      </div>
+      <p class="error-text" id="login-error" data-i18n="loginError" hidden></p>
+      <div class="dialog-actions">
+        <button class="btn" type="submit" data-i18n="loginBtn"></button>
+        <button class="btn btn-ghost" type="button" id="login-cancel" data-i18n="cancel"></button>
+      </div>
+    </form>
+  </dialog>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <span data-i18n="footerName"></span>
+      <a href="/privacy.html" data-i18n="privacy"></a>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <script>
+    // Supabase settings
+    const SUPABASE_URL = "https://zggjmatkhlwrhlpqptgo.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_yHnIXkZVx6pyqJoN54xcEg_1tyZmvy4";
+
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // These values are saved in the database in English. Only the labels change with the language.
+    const CATEGORIES = [
+      "Road / Pothole", "Streetlight", "Flooding / Drainage", "Garbage / Waste",
+      "Water Supply", "Electricity", "Peace and Order", "Other"
+    ];
+    const STATUSES = ["Pending", "In Progress", "Resolved"];
+
+    const I18N = {
+      tl: {
+        brand: "Ulat Barangay",
+        adminLogin: "Pumasok bilang admin",
+        logout: "Lumabas",
+        langBtn: "English",
+        heroTitle: "Mag-report ng problema sa inyong lugar at alamin kung naayos na ito.",
+        heroText: "Isulat kung saan at ano ang problema. Ia-update ng mga opisyal ang bawat report: naghihintay pa, ginagawa na, o tapos na. May mensahe rin sila kapag may nagawa na.",
+        reportBtn: "Mag-report ng problema",
+        seeAll: "Tingnan ang lahat ng report",
+        loading: "Sandali lang, kinukuha pa ang mga report...",
+        formTitle: "Mag-report ng problema",
+        category: "Anong klase ng problema?",
+        chooseCat: "Pumili ng klase",
+        location: "Saan ito?",
+        locationPh: "Kalye, purok, o malapit na lugar",
+        description: "Ano ang problema?",
+        name: "Pangalan mo",
+        optional: "(hindi kailangan)",
+        submit: "Ipadala ang report",
+        formNote: "Makikita ng lahat ang mga report. Huwag ilagay ang numero ng telepono o iba pang pribadong detalye.",
+        boardTitle: "Mga Report",
+        searchPh: "Maghanap ng report",
+        allCats: "Lahat ng klase",
+        all: "Lahat",
+        statusGroup: "Salain ayon sa katayuan",
+        count: "{n} report",
+        summary: "May {total} na report: {p} naghihintay, {i} ginagawa na, {r} tapos na.",
+        noReports: "Wala pang report.",
+        emptyFirst: "Wala pang report. Ikaw na ang mauna.",
+        emptyFilter: "Walang nakitang report. Palitan ang hinahanap o pumili ng ibang katayuan.",
+        loadError: "Hindi makuha ang mga report. Tiyaking may concerns table sa Supabase.",
+        anon: "Hindi nagpakilala",
+        reportedBy: "Nag-report: {who}",
+        remarksTitle: "Mensahe mula sa mga opisyal",
+        notePh: "Mensahe para sa mga residente",
+        statusLabel: "Katayuan",
+        save: "I-save",
+        del: "Burahin",
+        confirmDel: "Burahin ang report na ito?",
+        submitted: "Naipadala na ang report. Salamat!",
+        submitFail: "Hindi naipadala ang report.",
+        saved: "Na-save na.",
+        saveFail: "Hindi na-save. Pumasok ulit bilang admin at subukan muli.",
+        deleted: "Nabura na ang report.",
+        delFail: "Hindi nabura. Pumasok ulit bilang admin at subukan muli.",
+        loginTitle: "Pumasok bilang admin",
+        email: "Email",
+        password: "Password",
+        loginBtn: "Pumasok",
+        cancel: "Kanselahin",
+        loginError: "Hindi nakapasok. Tingnan ang email at password.",
+        loggedIn: "Nakapasok ka na.",
+        loggedOut: "Nakalabas ka na.",
+        footerName: "Sistema ng Pag-uulat ng Problema sa Barangay",
+        privacy: "Privacy",
+        pageTitle: "Ulat Barangay",
+        metaDesc: "Mag-report ng problema sa inyong lugar tulad ng lubak, sirang ilaw, baha o basura, at alamin kung naayos na.",
+        "cat.Road / Pothole": "Sirang kalsada / lubak",
+        "cat.Streetlight": "Ilaw sa kalsada",
+        "cat.Flooding / Drainage": "Baha / barado ang kanal",
+        "cat.Garbage / Waste": "Basura",
+        "cat.Water Supply": "Tubig",
+        "cat.Electricity": "Kuryente",
+        "cat.Peace and Order": "Gulo / seguridad",
+        "cat.Other": "Iba pa",
+        "st.Pending": "Naghihintay",
+        "st.In Progress": "Ginagawa na",
+        "st.Resolved": "Tapos na"
+      },
+      en: {
+        brand: "Barangay Concerns",
+        adminLogin: "Admin log in",
+        logout: "Log out",
+        langBtn: "Tagalog",
+        heroTitle: "Report a problem in your community and track its status.",
+        heroText: "Submit the location and a short description. Officials mark each report as Pending, In Progress or Resolved and leave a note when action is taken.",
+        reportBtn: "Report a concern",
+        seeAll: "See all reports",
+        loading: "Loading reports...",
+        formTitle: "Report a concern",
+        category: "Category",
+        chooseCat: "Choose a category",
+        location: "Location",
+        locationPh: "Street, purok or nearby landmark",
+        description: "What is the problem?",
+        name: "Your name",
+        optional: "(optional)",
+        submit: "Submit report",
+        formNote: "Reports are public. Leave out phone numbers and other private details.",
+        boardTitle: "Reports",
+        searchPh: "Search reports",
+        allCats: "All categories",
+        all: "All",
+        statusGroup: "Filter by status",
+        count: "{n} report(s)",
+        summary: "{total} reports so far: {p} pending, {i} in progress, {r} resolved.",
+        noReports: "No reports yet.",
+        emptyFirst: "No reports yet. Be the first to submit one.",
+        emptyFilter: "No reports match these filters. Clear the search or choose another status.",
+        loadError: "Couldn't load reports. Check that the concerns table exists in Supabase.",
+        anon: "Anonymous",
+        reportedBy: "Reported by {who}",
+        remarksTitle: "Update from officials",
+        notePh: "Note for residents",
+        statusLabel: "Status",
+        save: "Save update",
+        del: "Delete report",
+        confirmDel: "Delete this report?",
+        submitted: "Report submitted.",
+        submitFail: "Couldn't submit the report.",
+        saved: "Update saved.",
+        saveFail: "Couldn't save the update. Log in again and retry.",
+        deleted: "Report deleted.",
+        delFail: "Couldn't delete the report. Log in again and retry.",
+        loginTitle: "Admin log in",
+        email: "Email",
+        password: "Password",
+        loginBtn: "Log in",
+        cancel: "Cancel",
+        loginError: "Couldn't log in. Check your email and password.",
+        loggedIn: "Logged in.",
+        loggedOut: "Logged out.",
+        footerName: "Barangay Concern Reporting System",
+        privacy: "Privacy",
+        pageTitle: "Barangay Concerns",
+        metaDesc: "Report a community problem such as a pothole, broken streetlight, flooding or uncollected garbage, and track its status until it is resolved."
+      }
+    };
+
+    let lang = "tl";
+    try {
+      const saved = localStorage.getItem("lang");
+      if (saved === "tl" || saved === "en") lang = saved;
+    } catch (e) { /* storage not available, keep default */ }
+
+    function t(key, vars) {
+      let text = I18N[lang][key] ?? I18N.en[key] ?? key;
+      for (const name in (vars || {})) text = text.replace("{" + name + "}", vars[name]);
+      return text;
+    }
+    // Label for a value saved in English, such as a category or status
+    function label(prefix, value) {
+      return I18N[lang][prefix + value] ?? value;
+    }
+
+    let reports = [];
+    let loaded = false;
+    let isAdmin = false;
+    let statusFilter = "";
+    let toastTimer;
+
+    const $ = (id) => document.getElementById(id);
+
+    function esc(value) {
+      return String(value ?? "").replace(/[&<>"']/g, (c) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[c]));
+    }
+
+    function formatDate(iso) {
+      return new Date(iso).toLocaleDateString("en-PH", {
+        year: "numeric", month: "short", day: "numeric"
+      });
+    }
+
+    function toast(text, isError) {
+      const box = $("toast");
+      box.textContent = text;
+      box.className = "toast" + (isError ? " error" : "");
+      box.hidden = false;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { box.hidden = true; }, 4000);
+    }
+
+    /* ---------- Language ---------- */
+    function fillCategories() {
+      const formValue = $("category").value;
+      const filterValue = $("filter-category").value;
+      const options = CATEGORIES
+        .map((c) => `<option value="${esc(c)}">${esc(label("cat.", c))}</option>`).join("");
+      $("category").innerHTML = `<option value="">${esc(t("chooseCat"))}</option>` + options;
+      $("filter-category").innerHTML = `<option value="">${esc(t("allCats"))}</option>` + options;
+      $("category").value = formValue;
+      $("filter-category").value = filterValue;
+    }
+
+    function applyLang() {
+      document.documentElement.lang = lang;
+      document.title = t("pageTitle");
+      const meta = document.querySelector('meta[name="description"]');
+      if (meta) meta.setAttribute("content", t("metaDesc"));
+
+      document.querySelectorAll("[data-i18n]").forEach((el) => { el.textContent = t(el.dataset.i18n); });
+      document.querySelectorAll("[data-i18n-ph]").forEach((el) => { el.placeholder = t(el.dataset.i18nPh); });
+      document.querySelectorAll("[data-i18n-aria]").forEach((el) => { el.setAttribute("aria-label", t(el.dataset.i18nAria)); });
+      $("lang-btn").textContent = t("langBtn");
+
+      fillCategories();
+      if (loaded) renderAll();
+    }
+
+    $("lang-btn").addEventListener("click", () => {
+      lang = lang === "tl" ? "en" : "tl";
+      try { localStorage.setItem("lang", lang); } catch (e) { /* ignore */ }
+      applyLang();
+    });
+
+    /* ---------- Loading and showing reports ---------- */
+    async function loadReports() {
+      const { data, error } = await db
+        .from("concerns")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        $("summary").textContent = "";
+        $("list").innerHTML =
+          `<p class="empty">${esc(t("loadError"))} (${esc(error.message)})</p>`;
+        return;
+      }
+      reports = data;
+      loaded = true;
+      renderAll();
+    }
+
+    function countBy(status) {
+      return reports.filter((r) => r.status === status).length;
+    }
+
+    function renderSummary() {
+      if (!loaded) return;
+      if (reports.length === 0) {
+        $("summary").textContent = t("noReports");
+        return;
+      }
+      $("summary").textContent = t("summary", {
+        total: reports.length,
+        p: countBy("Pending"),
+        i: countBy("In Progress"),
+        r: countBy("Resolved")
+      });
+    }
+
+    function renderSegments() {
+      const items = [["", t("all"), reports.length]].concat(
+        STATUSES.map((s) => [s, label("st.", s), countBy(s)])
+      );
+      $("segments").innerHTML = items.map(([value, text, count]) => `
+        <button type="button" class="${value === statusFilter ? "active" : ""}"
+                data-status="${esc(value)}" aria-pressed="${value === statusFilter}">
+          ${esc(text)} ${count}
+        </button>`).join("");
+    }
+
+    function trackHtml(status) {
+      const level = status === "Resolved" ? 3 : status === "In Progress" ? 2 : 1;
+      const cls = status === "Resolved" ? "resolved" : status === "In Progress" ? "progress" : "pending";
+      const steps = [1, 2, 3].map((n) => `<span class="step ${n <= level ? "on" : ""}"></span>`).join("");
+      const text = label("st.", status);
+      return `<div class="track ${cls}" role="img" aria-label="${esc(t("statusLabel"))}: ${esc(text)}">
+        ${steps}<span class="track-label">${esc(text)}</span></div>`;
+    }
+
+    function reportHtml(r) {
+      const who = r.reporter_name ? esc(r.reporter_name) : esc(t("anon"));
+      const remarks = r.admin_remarks
+        ? `<p class="remarks"><strong>${esc(t("remarksTitle"))}</strong>${esc(r.admin_remarks)}</p>`
+        : "";
+
+      const admin = isAdmin ? `
+        <div class="admin-tools" data-id="${r.id}">
+          <select class="js-status" aria-label="${esc(t("statusLabel"))}">
+            ${STATUSES.map((s) => `<option value="${s}" ${s === r.status ? "selected" : ""}>${esc(label("st.", s))}</option>`).join("")}
+          </select>
+          <input class="js-remarks" type="text" placeholder="${esc(t("notePh"))}"
+                 aria-label="${esc(t("notePh"))}" value="${esc(r.admin_remarks || "")}" />
+          <button class="btn btn-small js-save" type="button">${esc(t("save"))}</button>
+          <button class="btn btn-small btn-danger js-delete" type="button">${esc(t("del"))}</button>
+        </div>` : "";
+
+      return `
+        <article class="report">
+          <div class="report-head">
+            <h3>${esc(label("cat.", r.category))}</h3>
+            <span class="when">${formatDate(r.created_at)}</span>
+          </div>
+          <p class="where">${esc(r.location)}</p>
+          <p class="by">${esc(t("reportedBy", { who: "\u0000" })).replace("\u0000", who)}</p>
+          <p class="desc">${esc(r.description)}</p>
+          ${trackHtml(r.status)}
+          ${remarks}
+          ${admin}
+        </article>`;
+    }
+
+    function render() {
+      if (!loaded) return;
+
+      const q = $("search").value.trim().toLowerCase();
+      const category = $("filter-category").value;
+
+      const list = reports.filter((r) =>
+        (!statusFilter || r.status === statusFilter) &&
+        (!category || r.category === category) &&
+        (!q || [r.category, label("cat.", r.category), r.location, r.description, r.reporter_name || ""]
+          .some((text) => text.toLowerCase().includes(q)))
+      );
+
+      $("count-label").textContent = t("count", { n: list.length }).replace("(s)", list.length === 1 ? "" : "s");
+
+      if (reports.length === 0) {
+        $("list").innerHTML = `<p class="empty">${esc(t("emptyFirst"))}</p>`;
+      } else if (list.length === 0) {
+        $("list").innerHTML = `<p class="empty">${esc(t("emptyFilter"))}</p>`;
+      } else {
+        $("list").innerHTML = list.map(reportHtml).join("");
+      }
+    }
+
+    function renderAll() {
+      renderSummary();
+      renderSegments();
+      render();
+    }
+
+    /* ---------- Submitting a report ---------- */
+    $("report-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      $("submit-btn").disabled = true;
+
+      const { error } = await db.from("concerns").insert({
+        reporter_name: $("reporter_name").value.trim() || null,
+        category: $("category").value,
+        location: $("location").value.trim(),
+        description: $("description").value.trim()
+      });
+
+      $("submit-btn").disabled = false;
+
+      if (error) {
+        toast(t("submitFail") + " " + error.message, true);
+        return;
+      }
+      $("report-form").reset();
+      toast(t("submitted"));
+      loadReports();
+    });
+
+    /* ---------- Filters ---------- */
+    $("segments").addEventListener("click", (e) => {
+      const button = e.target.closest("button[data-status]");
+      if (!button) return;
+      statusFilter = button.dataset.status;
+      renderSegments();
+      render();
+    });
+    $("search").addEventListener("input", render);
+    $("filter-category").addEventListener("change", render);
+
+    /* ---------- Admin actions ---------- */
+    $("list").addEventListener("click", async (e) => {
+      const tools = e.target.closest(".admin-tools");
+      if (!tools) return;
+      const id = Number(tools.dataset.id);
+
+      if (e.target.classList.contains("js-save")) {
+        const { data, error } = await db
+          .from("concerns")
+          .update({
+            status: tools.querySelector(".js-status").value,
+            admin_remarks: tools.querySelector(".js-remarks").value.trim() || null
+          })
+          .eq("id", id)
+          .select();
+
+        if (error || !data || data.length === 0) {
+          toast(t("saveFail"), true);
+          return;
+        }
+        toast(t("saved"));
+        loadReports();
+      }
+
+      if (e.target.classList.contains("js-delete")) {
+        if (!confirm(t("confirmDel"))) return;
+        const { data, error } = await db.from("concerns").delete().eq("id", id).select();
+
+        if (error || !data || data.length === 0) {
+          toast(t("delFail"), true);
+          return;
+        }
+        toast(t("deleted"));
+        loadReports();
+      }
+    });
+
+    /* ---------- Admin login ---------- */
+    function setAdmin(on) {
+      isAdmin = on;
+      $("login-btn").hidden = on;
+      $("logout-btn").hidden = !on;
+      render();
+    }
+
+    $("login-btn").addEventListener("click", () => {
+      $("login-error").hidden = true;
+      $("login-dialog").showModal();
+    });
+    $("login-cancel").addEventListener("click", () => $("login-dialog").close());
+
+    $("login-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const { error } = await db.auth.signInWithPassword({
+        email: $("login-email").value.trim(),
+        password: $("login-password").value
+      });
+
+      if (error) {
+        $("login-error").hidden = false;
+        return;
+      }
+      $("login-password").value = "";
+      $("login-dialog").close();
+      toast(t("loggedIn"));
+    });
+
+    $("logout-btn").addEventListener("click", async () => {
+      await db.auth.signOut();
+      toast(t("loggedOut"));
+    });
+
+    db.auth.onAuthStateChange((_event, session) => setAdmin(!!session));
+
+    /* ---------- Start ---------- */
+    applyLang();
+    loadReports();
+  </script>
+</body>
+</html>

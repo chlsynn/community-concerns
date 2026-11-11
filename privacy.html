@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="tl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Privacy | Ulat Barangay</title>
+  <meta name="description" content="What information the Barangay Concern Reporting System collects, who can see it, and where it is stored." />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <style>
+    :root { --ground: #f5f7f9; --surface: #fff; --ink: #16222e; --muted: #5a6876; --line: #d8dfe6; --accent: #1f4e79; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--ground); color: var(--ink); font: 16px/1.6 "Segoe UI", system-ui, -apple-system, sans-serif; }
+    .topbar { background: var(--surface); border-bottom: 1px solid var(--line); }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 0 20px; }
+    .topbar .wrap { padding-top: 14px; padding-bottom: 14px; }
+    .brand { font: 700 1.2rem Georgia, "Times New Roman", serif; color: var(--accent); text-decoration: none; }
+    main { padding-top: 36px; padding-bottom: 64px; }
+    h1 { font: 700 2rem/1.2 Georgia, "Times New Roman", serif; margin: 0 0 6px; }
+    h2 { font: 700 1.2rem Georgia, "Times New Roman", serif; margin: 30px 0 8px; }
+    p, li { max-width: 65ch; }
+    .meta { color: var(--muted); margin: 0 0 20px; }
+    a { color: var(--accent); }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+      .top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .link-btn { background: none; border: none; padding: 6px 0; cursor: pointer; font: inherit; font-weight: 600; color: var(--accent); }
+    .link-btn:hover { text-decoration: underline; }
+    [data-lang] { display: none; }
+    html[lang="tl"] [data-lang="tl"], html[lang="en"] [data-lang="en"] { display: block; }
+    html[lang="tl"] span[data-lang="tl"], html[lang="en"] span[data-lang="en"] { display: inline; }
+  </style>
+</head>
+<body>
+  <header class="topbar"><div class="wrap top"><a class="brand" href="/"><span data-lang="tl">Ulat Barangay</span><span data-lang="en">Barangay Concerns</span></a><button class="link-btn" id="lang-btn" type="button"></button></div></header>
+  <main class="wrap">
+    <div data-lang="tl">
+      <h1>Privacy</h1>
+      <p class="meta">Ipinapaliwanag ng pahinang ito kung anong impormasyon ang kinukuha ng website na ito at paano ito ginagamit.</p>
+
+      <h2>Ang inilalagay mo</h2>
+      <p>Kapag nagpadala ka ng report, sine-save ng site ang klase ng problema, ang lugar, ang paliwanag, ang petsa at oras ng report, at ang pangalan mo kung nilagay mo. Hindi kailangang ilagay ang pangalan. Kapag walang pangalan, ang makikita ay "Hindi nagpakilala".</p>
+
+      <h2>Sino ang makakakita</h2>
+      <p>Pampubliko ang mga report. Sinumang magbukas ng site na ito ay makakabasa ng lahat ng report, kasama ang lugar, paliwanag, at pangalan na nilagay mo. Huwag maglagay ng numero ng telepono, tirahan ng ibang tao, o iba pang pribadong detalye sa report.</p>
+
+      <h2>Ano ang magagawa ng mga admin</h2>
+      <p>Ang mga admin na naka-login ay puwedeng magpalit ng katayuan ng report, magdagdag o magbago ng mensahe para sa mga residente, at magbura ng report. Protektado ng email at password ang mga admin account.</p>
+
+      <h2>Saan naka-save ang data</h2>
+      <p>Ang mga report at admin account ay naka-save sa database ng Supabase. Ang website ay naka-host sa Vercel. Maaaring magtago ang dalawang serbisyong ito ng technical logs tulad ng IP address bilang bahagi ng normal nilang operasyon, ayon sa sarili nilang patakaran.</p>
+
+      <h2>Cookies at tracking</h2>
+      <p>Walang ads, analytics, o tracking script ang site na ito. Kapag nag-login ang admin, nagtatabi ang browser ng login session para hindi na kailangang mag-login ulit. Ang mga bisitang hindi nag-login ay walang itinatabi ang site na ito sa kanilang browser, maliban sa napili nilang wika.</p>
+
+      <h2>Pagtanggal ng report</h2>
+      <p>Kung may personal na impormasyon mo sa isang report at gusto mo itong tanggalin, makipag-ugnayan sa admin ng site at sabihin kung aling report ito. Puwede itong burahin ng admin.</p>
+
+      <h2>Tungkol sa proyektong ito</h2>
+      <p>Ginawa ang site na ito bilang proyekto sa klase. Hindi ito opisyal na sistema ng gobyerno.</p>
+
+      <p><a href="/">Bumalik sa mga report</a></p>
+    </div>
+
+    <div data-lang="en">
+      <h1>Privacy</h1>
+      <p class="meta">This page explains what this website collects and how it is used.</p>
+
+      <h2>What you submit</h2>
+      <p>When you submit a report, the site stores the category, the location, the description, the date and time of the report, and your name if you choose to enter one. The name is optional. Leaving it blank shows the report as Anonymous.</p>
+
+      <h2>Who can see it</h2>
+      <p>Reports are public. Anyone who opens this site can read every report, including the location, description and name you entered. Do not include phone numbers, home addresses of private individuals, or other personal details in a report.</p>
+
+      <h2>What administrators can do</h2>
+      <p>Signed-in administrators can change a report's status, add or edit a note for residents, and delete reports. Administrator accounts are protected by an email and password.</p>
+
+      <h2>Where the data is stored</h2>
+      <p>Reports and administrator accounts are stored in a database hosted by Supabase. The website is hosted by Vercel. Both services may keep technical logs such as IP addresses as part of normal operation, under their own policies.</p>
+
+      <h2>Cookies and tracking</h2>
+      <p>This site has no advertising, no analytics and no tracking scripts. When an administrator logs in, the browser stores a login session so the administrator stays signed in. Visitors who do not log in have nothing stored by this site, except the language they chose.</p>
+
+      <h2>Removing a report</h2>
+      <p>If a report contains your personal information and you want it removed, contact the site administrator and describe the report. Administrators can delete it.</p>
+
+      <h2>About this project</h2>
+      <p>This site was built as a class project. It is not an official government system.</p>
+
+      <p><a href="/">Back to reports</a></p>
+    </div>
+  </main>
+  <script>
+    let lang = "tl";
+    try { const s = localStorage.getItem("lang"); if (s === "tl" || s === "en") lang = s; } catch (e) {}
+    function apply() {
+      document.documentElement.lang = lang;
+      document.title = lang === "tl" ? "Privacy | Ulat Barangay" : "Privacy | Barangay Concerns";
+      document.getElementById("lang-btn").textContent = lang === "tl" ? "English" : "Tagalog";
+    }
+    document.getElementById("lang-btn").addEventListener("click", () => {
+      lang = lang === "tl" ? "en" : "tl";
+      try { localStorage.setItem("lang", lang); } catch (e) {}
+      apply();
+    });
+    apply();
+  </script>
+</body>
+</html>
