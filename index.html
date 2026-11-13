@@ -214,15 +214,15 @@
           </div>
           <div class="field">
             <label for="location" data-i18n="location"></label>
-            <input id="location" type="text" data-i18n-ph="locationPh" required />
+            <input id="location" type="text" maxlength="200" data-i18n-ph="locationPh" required />
           </div>
           <div class="field">
             <label for="description" data-i18n="description"></label>
-            <textarea id="description" required></textarea>
+            <textarea id="description" maxlength="1000" required></textarea>
           </div>
           <div class="field">
             <label for="reporter_name"><span data-i18n="name"></span> <span class="hint" data-i18n="optional"></span></label>
-            <input id="reporter_name" type="text" />
+            <input id="reporter_name" type="text" maxlength="80" />
           </div>
           <button class="btn" id="submit-btn" type="submit" data-i18n="submit"></button>
         </form>
@@ -561,7 +561,7 @@
           <select class="js-status" aria-label="${esc(t("statusLabel"))}">
             ${STATUSES.map((s) => `<option value="${s}" ${s === r.status ? "selected" : ""}>${esc(label("st.", s))}</option>`).join("")}
           </select>
-          <input class="js-remarks" type="text" placeholder="${esc(t("notePh"))}"
+          <input class="js-remarks" type="text" maxlength="500" placeholder="${esc(t("notePh"))}"
                  aria-label="${esc(t("notePh"))}" value="${esc(r.admin_remarks || "")}" />
           <button class="btn btn-small js-save" type="button">${esc(t("save"))}</button>
           <button class="btn btn-small btn-danger js-delete" type="button">${esc(t("del"))}</button>
